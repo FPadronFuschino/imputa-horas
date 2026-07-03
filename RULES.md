@@ -18,23 +18,37 @@ Los fines de semana se excluyen automáticamente.
 
 ## Cascada de reparto
 
-Dado lo **ya imputado** ese día (`totalLogged`) y el objetivo (`target`), se
-calculan las líneas a añadir en este orden. Los topes se aplican sobre el total
-del día (ya imputado + nuevo) por concepto:
+**`fpi`** ("lo que falta por imputar") = `objetivo − ya imputado ese día` (todo
+concepto ya registrado, no solo lo de este cálculo). Se calcula una vez y decide
+el tramo de Reuniones Varias.
 
-1. **Daily — 30 min** en el ticket de **Reuniones**, descripción `Daily`.
-   Solo si ese día NO existe ya un worklog en Reuniones con "Daily". Se suma al
-   efectivo.
-2. `gap = target − efectivo`. Si `gap ≤ 0`, no se añade nada más.
-3. **Reuniones Varias** (ticket de Reuniones, descripción `Reuniones Varias`),
-   tope **120 min/día**: añadir `min(gap, 120 − "Reuniones Varias" ya imputado)`.
-4. **Soportes Varios** (ticket de Soporte, descripción `Soportes Varios`),
-   tope **180 min/día**: añadir `min(gap, 180 − "Soportes Varios" ya imputado)`.
-5. **Desarrollo / relleno** (proyecto grande, `TFEX-5` por defecto; alternativa
-   `ALFA6-1306`), descripción `Desarrollo`: añadir el `gap` restante, sin tope.
+Líneas a añadir, en orden:
 
+1. **Daily — 30 min (OBLIGATORIO)** en el ticket de **Reuniones**, descripción
+   `Daily`. El ticket de Reuniones debe tener siempre al menos estos 30m.
+   Añádelo salvo que ese día ya exista un worklog `Daily` (no duplicar).
+2. **Reuniones Varias** (ticket de Reuniones, descripción `Reuniones Varias`),
+   importe fijo según `fpi`:
+   - `fpi ≥ 5h` (≥300 min) → **+1h30 (90 min)** → Reuniones total 2h.
+   - `3h ≤ fpi < 5h` (180–299 min) → **+1h (60 min)** → Reuniones total 1h30.
+   - `fpi < 3h` (<180 min) → **nada** → Reuniones total 30m (solo Daily).
+   Añade `min(gap restante, objetivo_del_tramo − "Reuniones Varias" ya imputado)`.
+3. **Soportes Varios** (ticket de Soporte, descripción `Soportes Varios`),
+   tope **180 min/día**: `min(gap restante, 180 − "Soportes Varios" ya imputado)`.
+4. **Desarrollo / relleno** (proyecto grande, `TFEX-5` por defecto; alternativa
+   `ALFA6-1306`), descripción `Desarrollo`: el `gap` restante, sin tope.
+
+`gap restante` = objetivo − (ya imputado + lo añadido en los pasos anteriores).
 Descripciones literales de worklog: `Daily`, `Reuniones Varias`,
 `Soportes Varios`, `Desarrollo`.
+
+Ejemplos (objetivo 8h30 = 510 min):
+
+| Ya imputado | fpi   | Daily | Reuniones Varias | Soportes Varios | Desarrollo |
+| ----------- | ----- | ----- | ---------------- | --------------- | ---------- |
+| 0           | 8h30  | 30m   | 1h30             | 3h              | 3h30       |
+| 4h (ALFA6)  | 4h30  | 30m   | 1h               | 3h              | —          |
+| 6h30        | 2h    | 30m   | —                | 1h30            | —          |
 
 ## Tickets del mes
 

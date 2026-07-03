@@ -331,6 +331,14 @@ function computeAllocation(entries, totalLogged, target){
   const reunionesVariasLogged = entries.filter(e=>e.issueKey===cfg.interf34 && /reuniones varias/i.test(e.description||"")).reduce((a,e)=>a+e.minutes,0);
   const soportesVariosLogged = entries.filter(e=>e.issueKey===cfg.interf35 && /soportes? varios/i.test(e.description||"")).reduce((a,e)=>a+e.minutes,0);
 
+  // fpi = "lo que falta por imputar" = objetivo - ya imputado. Decide el tramo
+  // de Reuniones Varias (importe fijo, no "rellenar hasta tope").
+  const fpi = target - totalLogged;
+  let reunionesVariasTarget = 0;
+  if (fpi >= 300) reunionesVariasTarget = 90;        // fpi >= 5h  -> +1h30
+  else if (fpi >= 180) reunionesVariasTarget = 60;   // 3h..5h     -> +1h
+  // fpi < 3h -> 0 (solo Daily)
+
   const toAdd = [];
   let effective = totalLogged;
   if (!hasDaily){
@@ -338,9 +346,8 @@ function computeAllocation(entries, totalLogged, target){
     effective += 30;
   }
   let gap = target - effective;
-  if (gap > 0){
-    const cap = Math.max(0, 120 - reunionesVariasLogged);
-    const add = Math.min(gap, cap);
+  if (gap > 0 && reunionesVariasTarget > 0){
+    const add = Math.min(gap, Math.max(0, reunionesVariasTarget - reunionesVariasLogged));
     if (add > 0){ toAdd.push({issueKey: cfg.interf34, minutes: add, description: "Reuniones Varias"}); gap -= add; }
   }
   if (gap > 0){

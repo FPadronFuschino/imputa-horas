@@ -90,22 +90,30 @@ imputes ese día. Los fines de semana ya se excluyen solos.
 
 ## Lógica de reparto
 
-Dado lo **ya imputado** ese día (`totalLogged` minutos) y el objetivo del día
-(`target`), calcula las líneas a añadir en este orden. Los topes son sobre el
-total del día (ya imputado + lo que vas a añadir), no solo sobre lo nuevo.
+Calcula primero **`fpi`** ("lo que falta por imputar") = `target − totalLogged`,
+donde `totalLogged` es todo lo ya imputado ese día. `fpi` decide cuánto va en
+Reuniones Varias. Luego añade las líneas en este orden:
 
-1. **Daily (30 min) en el ticket de Reuniones.** Si ese día NO existe ya un
-   worklog en el ticket de Reuniones con descripción que contenga "Daily",
-   añade 30 min con descripción `Daily`. Suma esos 30 min al efectivo.
-2. `gap = target − efectivo`. Si `gap ≤ 0`, no añadas nada más.
-3. **Reuniones Varias** (ticket de Reuniones, descripción `Reuniones Varias`),
-   con **tope de 120 min/día** en ese concepto: añade
-   `min(gap, 120 − "Reuniones Varias" ya imputado)`. Resta del gap.
-4. **Soportes Varios** (ticket de Soporte, descripción `Soportes Varios`), con
-   **tope de 180 min/día** en ese concepto: añade
-   `min(gap, 180 − "Soportes Varios" ya imputado)`. Resta del gap.
-5. **Relleno / Desarrollo** (proyecto grande, `TFEX-5` por defecto), descripción
+1. **Daily — 30 min (OBLIGATORIO)** en el ticket de Reuniones, descripción
+   `Daily`. El ticket de Reuniones lleva siempre al menos estos 30m. Añádelo
+   salvo que ese día ya exista un worklog cuya descripción contenga "Daily" (no
+   dupliques). Suma esos 30m al efectivo.
+2. **Reuniones Varias** (ticket de Reuniones, descripción `Reuniones Varias`),
+   importe fijo según `fpi`:
+   - `fpi ≥ 5h` (≥300 min) → **+1h30 (90 min)** (Reuniones total 2h).
+   - `3h ≤ fpi < 5h` (180–299 min) → **+1h (60 min)** (Reuniones total 1h30).
+   - `fpi < 3h` (<180 min) → **nada** (Reuniones se queda en el Daily de 30m).
+   Añade `min(gap, objetivo_del_tramo − "Reuniones Varias" ya imputado)`. Resta
+   del gap.
+3. **Soportes Varios** (ticket de Soporte, descripción `Soportes Varios`), con
+   **tope de 180 min/día**: añade `min(gap, 180 − "Soportes Varios" ya imputado)`.
+   Resta del gap.
+4. **Relleno / Desarrollo** (proyecto grande, `TFEX-5` por defecto), descripción
    `Desarrollo`: añade todo el `gap` restante.
+
+Donde `gap = target − efectivo` en cada paso (efectivo = ya imputado + lo añadido
+hasta ese punto). Si `gap ≤ 0`, no añadas más (pero el Daily del paso 1 es
+obligatorio de todas formas).
 
 Las descripciones deben quedar literalmente: `Daily`, `Reuniones Varias`,
 `Soportes Varios`, `Desarrollo`.
