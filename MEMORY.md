@@ -8,14 +8,17 @@ resuelve por búsqueda cada sesión y sigue funcionando.)
 
 ## Qué se guarda
 
-Por cada mes, la clave de los tickets de Reuniones y Soporte resueltos por
-título. Formato sugerido de la entrada:
+Por cada mes, **solo el enlace/clave** de los tickets de Reuniones y Soporte
+resueltos por título. **Nunca** worklogs ni entradas de los tickets (son
+compartidos por decenas de personas y ocupan muchísimo contexto). Formato
+sugerido de la entrada:
 
 ```
-imputa-horas: reuniones julio 2026 = INTERF-34, soporte julio 2026 = INTERF-35
+imputa-horas: reuniones julio 2026 = https://taxitronic.atlassian.net/browse/INTERF-34 ; soporte julio 2026 = https://taxitronic.atlassian.net/browse/INTERF-35
 ```
 
-Indexado por **`{mes} {año}`** (español, minúscula).
+La clave del ticket es el último segmento del enlace (`INTERF-34`). Indexado por
+**`{mes} {año}`** (español, minúscula).
 
 ## Ciclo de vida
 
@@ -30,6 +33,7 @@ Indexado por **`{mes} {año}`** (español, minúscula).
 
 ## Qué NO se guarda
 
+- **Worklogs ni entradas de los tickets** — jamás. Solo el enlace/clave.
 - Objetivos por día, topes y cascada de reparto: son fijos y viven en `RULES.md`
   / `SKILL.md`, no en memoria.
 - Credenciales ni tokens de JIRA: la autenticación la gestiona el MCP de

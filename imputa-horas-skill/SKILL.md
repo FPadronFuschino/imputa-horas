@@ -45,8 +45,10 @@ usando el mes y año actuales en zona horaria de Madrid):
 
 1. Calcula `{mes} {año}` actuales (p. ej. `julio 2026`).
 2. **Mira en tu memoria persistente** si ya tienes resueltos los tickets para
-   ese `{mes} {año}` (p. ej. una entrada tipo
-   `imputa-horas: reuniones julio 2026 = INTERF-34, soporte julio 2026 = INTERF-35`).
+   ese `{mes} {año}`. Guarda **solo el enlace/clave** de cada ticket, nunca sus
+   entradas. Ejemplo de entrada de memoria:
+   `imputa-horas: reuniones julio 2026 = https://taxitronic.atlassian.net/browse/INTERF-34 ; soporte julio 2026 = https://taxitronic.atlassian.net/browse/INTERF-35`.
+   La clave del ticket es el último segmento del enlace (`INTERF-34`).
    Si la tienes, úsala directamente — no vuelvas a buscar.
    > Como la memoria va indexada por mes+año, al cambiar de mes (el día 1) no
    > habrá entrada para el mes nuevo y se dispara automáticamente una búsqueda
@@ -58,8 +60,9 @@ usando el mes y año actuales en zona horaria de Madrid):
    Verifica que el `summary` del issue devuelto coincide con el título esperado
    (comparación sin distinguir mayúsculas). Si hay exactamente un match claro,
    tómalo.
-4. **Guárdalo en tu memoria persistente** para ese `{mes} {año}`, para no
-   repetir la búsqueda en futuras sesiones.
+4. **Guarda solo el enlace/clave** en tu memoria persistente para ese
+   `{mes} {año}`, para no repetir la búsqueda en futuras sesiones. No guardes
+   worklogs ni entradas del ticket.
 5. Si **no encuentras** el ticket (0 resultados) o hay varios y ninguno coincide
    con claridad, **pregunta al usuario** la clave del ticket que falte
    (p. ej. "No encuentro el ticket de Reuniones de julio 2026, ¿cuál es su
@@ -114,20 +117,32 @@ Las descripciones deben quedar literalmente: `Daily`, `Reuniones Varias`,
 2. Resuelve los tickets de Reuniones y Soporte del mes (ver
    *Tickets del mes* en Configuración: memoria → búsqueda por título →
    preguntar). No sigas sin tener ambas claves.
-3. **Lee lo ya imputado ese día** en TODOS los issues del usuario:
+3. **Lee SOLO tus propias entradas de ese día.** Los tickets de Reuniones y
+   Soporte son compartidos: tienen cientos de worklogs de decenas de personas.
+   **NUNCA cargues el histórico completo de un ticket ni las entradas de otros
+   compañeros** — es un desperdicio enorme de contexto. Solo necesitas los
+   worklogs del usuario autenticado en la fecha exacta.
    - `atlassianUserInfo` → `accountId` del usuario actual.
    - `searchJiraIssuesUsingJql` con
      `jql = 'worklogAuthor = currentUser() AND worklogDate = "<fecha>"'`,
-     `fields=["summary"]` → claves de issues con worklog ese día.
-   - Para cada issue, `getJiraIssue` (cloudId, issueIdOrKey, `fields=["worklog"]`)
-     y filtra `fields.worklog.worklogs` cuyo `author.accountId` coincida Y cuyo
-     `started` (primeros 10 caracteres, `YYYY-MM-DD`) sea exactamente la fecha.
-   - **Eficiencia:** si un issue tiene mucho histórico (`fields.worklog.total`
-     alto, p. ej. el proyecto de relleno), no traigas todo desde el principio;
-     pide las entradas más recientes (mayor `maxResults`, o `startAt` cercano al
-     final), ya que la fecha buscada suele estar entre las últimas.
-   - Suma `timeSpentSeconds/60` por entrada. Anota la descripción (`comment`) de
-     cada una, en texto plano.
+     `fields=["summary"]`. Devuelve SOLO los issues donde **tú** imputaste ese
+     día (claves + summary, barato). **Si un ticket no aparece en este
+     resultado, no has imputado nada en él ese día → cuéntalo como 0 y NO leas
+     sus worklogs.**
+   - Solo para los issues que aparezcan, obtén tus entradas de ESE día de forma
+     **acotada**:
+     - Si la herramienta admite filtro por fecha (`startedAfter` /
+       `startedBefore`), úsalo para pedir únicamente ese día.
+     - Si no, con `getJiraIssue` (`fields=["worklog"]`) pide una **página
+       pequeña desde el FINAL** (`startAt` cercano a `fields.worklog.total`,
+       `maxResults` pequeño, p. ej. 20–50) y quédate solo con las entradas cuyo
+       `author.accountId` sea el tuyo Y cuyo `started` (`YYYY-MM-DD`) sea la
+       fecha. **Para en cuanto tengas tus entradas del día; no recorras toda la
+       colección ni retrocedas página a página.**
+   - **Tope duro:** no leas más de ~2 páginas / ~100 worklogs por issue. Si aun
+     así no logras aislar tus entradas del día, **pregunta al usuario** cuánto
+     lleva imputado ese día en ese ticket en vez de seguir leyendo.
+   - Suma `timeSpentSeconds/60` de **tus** entradas del día y anota su `comment`.
 4. Calcula el reparto con la lógica de arriba.
 5. **Muestra al usuario** una tabla con: lo ya imputado (issue · descripción ·
    minutos), el objetivo del día, y la propuesta a imputar (ticket · descripción
@@ -145,10 +160,13 @@ Las descripciones deben quedar literalmente: `Daily`, `Reuniones Varias`,
    de esa semana y los 5 días laborables (lunes–viernes).
 2. Excluye fines de semana y días no laborables.
 3. Lee lo ya imputado en el rango con una sola búsqueda:
-   `jql = 'worklogAuthor = currentUser() AND worklogDate >= "<lunes>" AND worklogDate <= "<viernes>"'`,
-   luego `getJiraIssue` por issue con `fields=["worklog"]` y agrupa por fecha
-   (mismo filtro por `accountId` y por fecha exacta que en el flujo diario;
-   misma nota de eficiencia para issues con mucho histórico).
+   `jql = 'worklogAuthor = currentUser() AND worklogDate >= "<lunes>" AND worklogDate <= "<viernes>"'`.
+   Devuelve SOLO los issues donde tú imputaste en la semana; los que no
+   aparezcan cuentan como 0 y no se leen. Para los que aparezcan, aplica la
+   **misma lectura acotada del flujo diario** (filtro por fecha si existe, o
+   página pequeña desde el final, tope duro ~100 worklogs, y preguntar si no se
+   aíslan tus entradas). **Nunca leas el histórico completo ni las entradas de
+   otros.** Agrupa tus entradas por fecha.
 4. Para cada día laborable calcula objetivo, ya imputado y pendiente con la
    lógica de reparto.
 5. Muestra una tabla semanal (día · fecha · ya imputado · objetivo · pendiente ·
@@ -159,6 +177,10 @@ Las descripciones deben quedar literalmente: `Daily`, `Reuniones Varias`,
 
 ## Notas
 
+- **Regla de oro de contexto:** los tickets de Reuniones y Soporte son
+  compartidos por decenas de personas. No leas su histórico completo ni las
+  entradas de otros: solo tus propios worklogs de la fecha concreta, de forma
+  acotada. En memoria guarda únicamente el enlace/clave del ticket.
 - Formato JIRA de tiempo: horas y minutos, p. ej. `8h`, `8h 30m`, `30m`.
 - Nunca imputes sin confirmación del usuario, ni dupliques worklogs ya
   existentes: la lógica de reparto ya descuenta lo imputado, pero verifica que

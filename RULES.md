@@ -56,5 +56,13 @@ si no se encuentra, preguntar al usuario.
   duplicar el `Daily` si ya existe.
 - Filtrar worklogs por `author.accountId` del usuario autenticado Y por fecha
   exacta (`started`, `YYYY-MM-DD`).
-- Eficiencia: en issues con mucho histórico (proyecto de relleno), leer las
-  entradas más recientes primero, no todo el histórico.
+- **Nunca leer el histórico completo de un ticket ni las entradas de otros
+  compañeros.** Reuniones y Soporte son tickets compartidos por decenas de
+  personas; solo interesan los worklogs propios del día. Lectura acotada: usar
+  el resultado del JQL por `worklogAuthor = currentUser()` para saber en qué
+  issues imputó el usuario (los que no aparezcan = 0, no se leen), y en esos
+  leer solo la fecha buscada (filtro por fecha si existe, o página pequeña desde
+  el final) con tope duro (~100 worklogs/issue). Si no se aíslan las entradas
+  propias dentro del tope, preguntar al usuario en vez de seguir leyendo.
+- En memoria se guarda **solo el enlace/clave** de los tickets del mes, nunca
+  sus entradas.
