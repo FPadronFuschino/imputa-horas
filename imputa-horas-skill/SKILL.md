@@ -129,20 +129,31 @@ Las descripciones deben quedar literalmente: `Daily`, `Reuniones Varias`,
      día (claves + summary, barato). **Si un ticket no aparece en este
      resultado, no has imputado nada en él ese día → cuéntalo como 0 y NO leas
      sus worklogs.**
-   - Solo para los issues que aparezcan, obtén tus entradas de ESE día de forma
-     **acotada**:
-     - Si la herramienta admite filtro por fecha (`startedAfter` /
-       `startedBefore`), úsalo para pedir únicamente ese día.
-     - Si no, con `getJiraIssue` (`fields=["worklog"]`) pide una **página
-       pequeña desde el FINAL** (`startAt` cercano a `fields.worklog.total`,
-       `maxResults` pequeño, p. ej. 20–50) y quédate solo con las entradas cuyo
-       `author.accountId` sea el tuyo Y cuyo `started` (`YYYY-MM-DD`) sea la
-       fecha. **Para en cuanto tengas tus entradas del día; no recorras toda la
-       colección ni retrocedas página a página.**
-   - **Tope duro:** no leas más de ~2 páginas / ~100 worklogs por issue. Si aun
-     así no logras aislar tus entradas del día, **pregunta al usuario** cuánto
-     lleva imputado ese día en ese ticket en vez de seguir leyendo.
-   - Suma `timeSpentSeconds/60` de **tus** entradas del día y anota su `comment`.
+   - Solo para los issues que aparezcan, lee tus entradas de ESE día con **una
+     sola** llamada `getJiraIssue` (`fields=["worklog"]`). Comportamiento REAL
+     de este MCP (comprobado): la respuesta trae `fields.worklog.total` y como
+     mucho ~20 worklogs, que son los **más antiguos**; **no pagina de forma
+     fiable hasta el final ni filtra por fecha** (aunque pases
+     `startAt`/`startedAfter`, puede ignorarlos).
+     - Si `fields.worklog.total` ≤ ~20, o la página devuelta contiene la fecha
+       buscada → filtra por tu `accountId` + fecha (`started`, `YYYY-MM-DD`) y
+       úsalo. (Caso típico de tus tickets ALFA6, con pocas entradas.)
+     - Si `total` es alto y la página (entradas viejas) NO contiene la fecha →
+       **NO insistas con más páginas** (no funciona y malgasta contexto). Es un
+       ticket compartido de mucho volumen (INTERF de Reuniones/Soporte, cientos
+       de worklogs): tu entrada del día **no es legible por MCP**. Ve al
+       fallback.
+   - **Fallback para ticket compartido ilegible** (apareció en el JQL del día
+     pero no puedes leer tu entrada):
+     - Sabes que imputaste *algo* ese día en ese ticket. Muestra lo que sí es
+       legible y **pregunta al usuario cuánto tiene ese día en ese ticket** y en
+       qué concepto (p. ej. Daily 30m / Reuniones Varias Xm). **No asumas 0**:
+       infravalorar lo imputado haría que sobre-imputes el resto en TFEX-5 y el
+       día pase del objetivo.
+     - Con su respuesta, aplica la cascada normal (no dupliques el Daily si ya
+       existe).
+   - Suma `timeSpentSeconds/60` de tus entradas legibles + lo confirmado por el
+     usuario. Anota su `comment`.
 4. Calcula el reparto con la lógica de arriba.
 5. **Muestra al usuario** una tabla con: lo ya imputado (issue · descripción ·
    minutos), el objetivo del día, y la propuesta a imputar (ticket · descripción
@@ -181,6 +192,15 @@ Las descripciones deben quedar literalmente: `Daily`, `Reuniones Varias`,
   compartidos por decenas de personas. No leas su histórico completo ni las
   entradas de otros: solo tus propios worklogs de la fecha concreta, de forma
   acotada. En memoria guarda únicamente el enlace/clave del ticket.
+- **Limitación conocida del MCP:** `getJiraIssue` devuelve solo la primera
+  página del worklog (~20 entradas, las más antiguas) y no filtra por fecha ni
+  pagina fiable. En tickets con cientos de worklogs (Reuniones/Soporte) no se
+  puede leer tu entrada del día → se resuelve por confirmación del usuario
+  (fallback). Los tickets propios ALFA6, con pocas entradas, sí se leen bien.
+- **Día "en fresco" (nada imputado aún):** el JQL autor+fecha no devuelve nada,
+  así que no se lee ningún ticket compartido ni se pregunta nada — se aplica la
+  cascada completa directamente. El fallback (preguntar) solo aparece al
+  verificar/completar un día ya imputado parcialmente en el ticket compartido.
 - Formato JIRA de tiempo: horas y minutos, p. ej. `8h`, `8h 30m`, `30m`.
 - Nunca imputes sin confirmación del usuario, ni dupliques worklogs ya
   existentes: la lógica de reparto ya descuenta lo imputado, pero verifica que

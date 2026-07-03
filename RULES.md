@@ -66,3 +66,17 @@ si no se encuentra, preguntar al usuario.
   propias dentro del tope, preguntar al usuario en vez de seguir leyendo.
 - En memoria se guarda **solo el enlace/clave** de los tickets del mes, nunca
   sus entradas.
+
+## Limitación conocida del MCP (Rovo)
+
+`getJiraIssue` devuelve solo la **primera página** del worklog (~20 entradas,
+las más antiguas) y **no filtra por fecha ni pagina fiable**. Consecuencias:
+
+- Tickets con pocas entradas (ALFA6 propios): se leen bien; se filtra por
+  autor+fecha sin problema.
+- Tickets compartidos de mucho volumen (INTERF Reuniones/Soporte, cientos de
+  worklogs): la entrada propia del día **no es legible**. Se detecta la
+  *presencia* con el JQL `worklogAuthor = currentUser() AND worklogDate = X`,
+  pero el *importe* se pide al usuario (no se asume 0).
+- Un día en fresco (sin nada imputado) no requiere leer tickets compartidos ni
+  preguntar: se aplica la cascada completa directamente.
