@@ -1,0 +1,5 @@
+# Paquetes de la Skill (regenerables desde imputa-horas-skill/)
+*.zip
+
+# Sistema
+.DS_Store

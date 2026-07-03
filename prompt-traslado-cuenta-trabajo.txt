@@ -1,0 +1,3 @@
+Crea un artefacto HTML con el contenido exacto del fichero adjunto "imputacion-horas.html" — sin modificar nada del código (estilos, HTML ni JavaScript). Es un panel de imputación de horas en JIRA vía MCP (Atlassian Rovo) que ya está terminado y probado; solo necesito que lo publiques tal cual como artefacto en esta cuenta.
+
+Después de crearlo, publícalo (Publish) para que quede accesible desde mi Artifacts en esta cuenta de trabajo.
