@@ -15,7 +15,10 @@ Interfacom/Taxitronic, cerrando cada día laborable a su objetivo (8h o 8h30).
 2. **`imputa-horas-skill/SKILL.md`** — **Agent Skill de claude.ai** que hace lo
    mismo de forma conversacional, llamando directamente a las herramientas MCP de
    Atlassian (sin el `fetch` ni el parseo de JSON del panel) y recordando estado
-   en la memoria persistente de claude.ai.
+   en la memoria persistente de claude.ai. Es el **fuente único** de la Skill.
+   `.claude/skills/imputa-horas/SKILL.md` es un **symlink** a este fichero, para
+   que la Skill funcione también como skill de proyecto de Claude Code sin
+   duplicar contenido.
 
 No hay sistema de build, dependencias ni tests: son artefactos que se publican/
 suben tal cual.
